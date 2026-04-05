@@ -1,0 +1,3363 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Cloud & AI Server</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #222240;
+            --accent-blue: #4f8fff;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-cyan: #06b6d4;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #2a2a4a;
+            --gradient-1: linear-gradient(135deg, #4f8fff, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #8b5cf6, #ec4899);
+            --gradient-3: linear-gradient(135deg, #10b981, #06b6d4);
+            --shadow-glow: 0 0 40px rgba(79, 143, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(79, 143, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-grid::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(79, 143, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79, 143, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 2rem;
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .nav-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text-primary);
+            background: rgba(79, 143, 255, 0.1);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .lang-selector {
+            position: relative;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .lang-btn .flag {
+            font-size: 1.1rem;
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 8px;
+            min-width: 180px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        .lang-dropdown.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .lang-option:hover {
+            background: rgba(79, 143, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .lang-option.active {
+            background: rgba(79, 143, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .lang-option .flag {
+            font-size: 1.2rem;
+        }
+
+        .nav-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            transition: width 0.3s ease;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 2rem 80px;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .hero-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .hero-orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(79, 143, 255, 0.08);
+            top: 10%;
+            right: 10%;
+            animation-delay: 0s;
+        }
+
+        .hero-orb-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(139, 92, 246, 0.08);
+            bottom: 20%;
+            left: 5%;
+            animation-delay: -3s;
+        }
+
+        .hero-orb-3 {
+            width: 250px;
+            height: 250px;
+            background: rgba(236, 72, 153, 0.06);
+            top: 40%;
+            left: 30%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -30px); }
+            66% { transform: translate(-20px, 20px); }
+        }
+
+        .hero-content {
+            max-width: 900px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(79, 143, 255, 0.1);
+            border: 1px solid rgba(79, 143, 255, 0.2);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        .hero h1 .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero h1 .gradient-text-2 {
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.8;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 20px rgba(79, 143, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(79, 143, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .section {
+            position: relative;
+            z-index: 1;
+            padding: 100px 2rem;
+        }
+
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--accent-purple);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .os-selector {
+            position: sticky;
+            top: 70px;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 16px 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .os-selector-inner {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 8px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .os-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .os-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .os-btn.active {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 143, 255, 0.3);
+        }
+
+        .os-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 3rem;
+        }
+
+        .arch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arch-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .arch-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(79, 143, 255, 0.3);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .arch-card:hover::before {
+            opacity: 1;
+        }
+
+        .arch-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .arch-icon.blue { background: rgba(79, 143, 255, 0.15); }
+        .arch-icon.purple { background: rgba(139, 92, 246, 0.15); }
+        .arch-icon.green { background: rgba(16, 185, 129, 0.15); }
+        .arch-icon.pink { background: rgba(236, 72, 153, 0.15); }
+        .arch-icon.orange { background: rgba(245, 158, 11, 0.15); }
+        .arch-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+
+        .arch-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .arch-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .req-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .req-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .req-card:hover {
+            border-color: rgba(79, 143, 255, 0.3);
+        }
+
+        .req-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .req-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .req-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .req-card h3 span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .req-list {
+            list-style: none;
+        }
+
+        .req-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .req-list li:last-child {
+            border-bottom: none;
+        }
+
+        .req-list li .check {
+            color: var(--accent-green);
+            font-size: 1rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .req-list li strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .steps-container {
+            position: relative;
+        }
+
+        .step {
+            position: relative;
+            margin-bottom: 3rem;
+            padding-left: 80px;
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            left: 27px;
+            top: 60px;
+            bottom: -3rem;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--border-color), transparent);
+        }
+
+        .step:last-child::before {
+            display: none;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 4px 20px rgba(79, 143, 255, 0.3);
+        }
+
+        .step-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .step-content:hover {
+            border-color: rgba(79, 143, 255, 0.2);
+        }
+
+        .step-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ff5f57; }
+        .code-dot:nth-child(2) { background: #ffbd2e; }
+        .code-dot:nth-child(3) { background: #28c840; }
+
+        .code-lang {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .code-copy {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .code-copy:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+
+        .code-copy.copied {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .code-body {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #e6edf3;
+        }
+
+        .code-body .comment { color: #6e7681; }
+        .code-body .keyword { color: #ff7b72; }
+        .code-body .string { color: #a5d6ff; }
+        .code-body .function { color: #d2a8ff; }
+        .code-body .variable { color: #ffa657; }
+        .code-body .flag { color: #79c0ff; }
+
+        .os-content {
+            display: none;
+        }
+
+        .os-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .step-tab {
+            padding: 8px 20px;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .step-tab:hover {
+            color: var(--text-secondary);
+        }
+
+        .step-tab.active {
+            background: rgba(79, 143, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .info-box {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin: 16px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        .info-box.tip {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        .info-box.warning {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .info-box.danger {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .info-box.info {
+            background: rgba(79, 143, 255, 0.08);
+            border: 1px solid rgba(79, 143, 255, 0.2);
+            color: #93c5fd;
+        }
+
+        .info-box-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .progress-sidebar {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .progress-dot::after {
+            content: attr(data-label);
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .progress-dot:hover::after {
+            opacity: 1;
+        }
+
+        .progress-dot.active {
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(79, 143, 255, 0.4);
+            transform: scale(1.3);
+        }
+
+        .progress-dot.completed {
+            background: var(--accent-green);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-glow);
+            border-color: rgba(79, 143, 255, 0.3);
+        }
+
+        .feature-card-img {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card-img.fc-1 { background: linear-gradient(135deg, rgba(79, 143, 255, 0.1), rgba(139, 92, 246, 0.1)); }
+        .feature-card-img.fc-2 { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1)); }
+        .feature-card-img.fc-3 { background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(139, 92, 246, 0.1)); }
+        .feature-card-img.fc-4 { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1)); }
+
+        .feature-card-body {
+            padding: 28px;
+        }
+
+        .feature-card-body h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-card-body p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 24px 0;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: rgba(79, 143, 255, 0.1);
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .comparison-table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .faq-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(79, 143, 255, 0.2);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 20px 24px;
+            background: var(--bg-card);
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            font-family: inherit;
+        }
+
+        .faq-question .arrow {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .faq-item.open .faq-question .arrow {
+            transform: rotate(180deg);
+            color: var(--accent-blue);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .faq-answer-inner {
+            padding: 0 24px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 500px;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border-color);
+            padding: 60px 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Chatbot Styles */
+        .chatbot-toggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 20px rgba(79, 143, 255, 0.4);
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(79, 143, 255, 0.5);
+        }
+
+        .chatbot-toggle.active {
+            background: var(--accent-red);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .chatbot-container {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 400px;
+            max-width: calc(100vw - 48px);
+            height: 550px;
+            max-height: calc(100vh - 150px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-container.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .chatbot-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(79, 143, 255, 0.1), rgba(139, 92, 246, 0.1));
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .chatbot-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .chatbot-info h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .chatbot-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .chatbot-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chatbot-status .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .chat-message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .chat-message.bot .chat-message-avatar {
+            background: var(--gradient-1);
+        }
+
+        .chat-message.user .chat-message-avatar {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .chat-message-content {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .chat-message.bot .chat-message-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 6px;
+        }
+
+        .chat-message.user .chat-message-content {
+            background: var(--gradient-1);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .chat-message-content a {
+            color: var(--accent-blue);
+        }
+
+        .chat-message.user .chat-message-content a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .chat-typing {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .chat-typing span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typingDot 1.4s infinite;
+        }
+
+        .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        .chatbot-suggestions {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chat-suggestion {
+            padding: 8px 14px;
+            background: rgba(79, 143, 255, 0.1);
+            border: 1px solid rgba(79, 143, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .chat-suggestion:hover {
+            background: rgba(79, 143, 255, 0.2);
+        }
+
+        .chatbot-input {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 14px 18px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .chatbot-input input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(79, 143, 255, 0.1);
+        }
+
+        .chatbot-input input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chatbot-input button {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--gradient-1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-input button:hover {
+            transform: scale(1.05);
+        }
+
+        .chatbot-input button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .arch-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .arch-diagram-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .arch-layer {
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .arch-layer:hover {
+            transform: scale(1.02);
+        }
+
+        .arch-layer.l1 {
+            background: rgba(79, 143, 255, 0.15);
+            border: 1px solid rgba(79, 143, 255, 0.3);
+            color: var(--accent-blue);
+        }
+
+        .arch-layer.l2 {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: var(--accent-purple);
+        }
+
+        .arch-layer.l3 {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+        }
+
+        .arch-layer.l4 {
+            background: rgba(236, 72, 153, 0.15);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            color: var(--accent-pink);
+        }
+
+        .arch-layer.l5 {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--accent-orange);
+        }
+
+        .arch-arrow {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .inline-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .inline-badge.recommended {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .inline-badge.optional {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .inline-badge.advanced {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: block; }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .step {
+                padding-left: 0;
+                padding-top: 72px;
+            }
+
+            .step-number {
+                left: 0;
+                top: 0;
+            }
+
+            .step::before {
+                display: none;
+            }
+
+            .os-selector-inner {
+                flex-direction: column;
+            }
+
+            .progress-sidebar {
+                display: none;
+            }
+
+            .arch-grid, .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .req-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                font-size: 0.8rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 10px 12px;
+            }
+
+            .chatbot-container {
+                bottom: 90px;
+                right: 12px;
+                width: calc(100vw - 24px);
+                height: calc(100vh - 120px);
+            }
+
+            .chatbot-toggle {
+                width: 56px;
+                height: 56px;
+                bottom: 16px;
+                right: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section {
+                padding: 60px 1rem;
+            }
+
+            .step-content {
+                padding: 20px;
+            }
+
+            .hero {
+                padding: 100px 1rem 60px;
+            }
+
+            .lang-btn .lang-name {
+                display: none;
+            }
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px;
+            z-index: 999;
+        }
+
+        .mobile-menu.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu a:hover {
+            background: rgba(79, 143, 255, 0.1);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-content">
+            <a href="#" class="nav-logo">
+                <div class="nav-logo-icon">☁️</div>
+                <span>HomeCloud AI</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#overview" class="active" data-i18n="nav.overview">Overview</a></li>
+                <li><a href="#requirements" data-i18n="nav.requirements">Requirements</a></li>
+                <li><a href="#setup" data-i18n="nav.setup">Setup</a></li>
+                <li><a href="#cloud" data-i18n="nav.cloud">Cloud Drive</a></li>
+                <li><a href="#ai" data-i18n="nav.ai">AI Server</a></li>
+                <li><a href="#ui" data-i18n="nav.interface">Interface</a></li>
+                <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="lang-selector">
+                    <button class="lang-btn" id="langBtn" onclick="toggleLangDropdown(event)">
+                        <span class="flag" id="currentFlag">🇬🇧</span>
+                        <span class="lang-name" id="currentLang">English</span>
+                        <span style="font-size: 0.7rem;">▼</span>
+                    </button>
+                    <div class="lang-dropdown" id="langDropdown">
+                        <div class="lang-option active" data-lang="en" onclick="changeLanguage('en')">
+                            <span class="flag">🇬🇧</span>
+                            <span>English</span>
+                        </div>
+                        <div class="lang-option" data-lang="es" onclick="changeLanguage('es')">
+                            <span class="flag">🇪🇸</span>
+                            <span>Español</span>
+                        </div>
+                        <div class="lang-option" data-lang="de" onclick="changeLanguage('de')">
+                            <span class="flag">🇩🇪</span>
+                            <span>Deutsch</span>
+                        </div>
+                        <div class="lang-option" data-lang="fr" onclick="changeLanguage('fr')">
+                            <span class="flag">🇫🇷</span>
+                            <span>Français</span>
+                        </div>
+                        <div class="lang-option" data-lang="it" onclick="changeLanguage('it')">
+                            <span class="flag">🇮🇹</span>
+                            <span>Italiano</span>
+                        </div>
+                        <div class="lang-option" data-lang="pt" onclick="changeLanguage('pt')">
+                            <span class="flag">🇵🇹</span>
+                            <span>Português</span>
+                        </div>
+                        <div class="lang-option" data-lang="zh" onclick="changeLanguage('zh')">
+                            <span class="flag">🇨🇳</span>
+                            <span>中文</span>
+                        </div>
+                        <div class="lang-option" data-lang="ja" onclick="changeLanguage('ja')">
+                            <span class="flag">🇯🇵</span>
+                            <span>日本語</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+            </div>
+        </div>
+        <div class="nav-progress" id="navProgress"></div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#overview" onclick="toggleMobileMenu()" data-i18n="nav.overview">Overview</a>
+        <a href="#requirements" onclick="toggleMobileMenu()" data-i18n="nav.requirements">Requirements</a>
+        <a href="#setup" onclick="toggleMobileMenu()" data-i18n="nav.setup">Setup</a>
+        <a href="#cloud" onclick="toggleMobileMenu()" data-i18n="nav.cloud">Cloud Drive</a>
+        <a href="#ai" onclick="toggleMobileMenu()" data-i18n="nav.ai">AI Server</a>
+        <a href="#ui" onclick="toggleMobileMenu()" data-i18n="nav.interface">Interface</a>
+        <a href="#faq" onclick="toggleMobileMenu()" data-i18n="nav.faq">FAQ</a>
+    </div>
+
+    <!-- Progress Sidebar -->
+    <div class="progress-sidebar" id="progressSidebar">
+        <div class="progress-dot active" data-label="Overview" onclick="scrollToSection('overview')"></div>
+        <div class="progress-dot" data-label="Requirements" onclick="scrollToSection('requirements')"></div>
+        <div class="progress-dot" data-label="Base Setup" onclick="scrollToSection('setup')"></div>
+        <div class="progress-dot" data-label="Cloud Drive" onclick="scrollToSection('cloud')"></div>
+        <div class="progress-dot" data-label="AI Server" onclick="scrollToSection('ai')"></div>
+        <div class="progress-dot" data-label="Interface" onclick="scrollToSection('ui')"></div>
+        <div class="progress-dot" data-label="FAQ" onclick="scrollToSection('faq')"></div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-orb hero-orb-3"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse"></span>
+                <span data-i18n="hero.badge">Complete Guide • 2026 Edition</span>
+            </div>
+            <h1>
+                <span data-i18n="hero.title1">Build Your Own</span><br>
+                <span class="gradient-text" data-i18n="hero.title2">Personal Cloud</span> &<br>
+                <span class="gradient-text-2" data-i18n="hero.title3">AI Server</span>
+            </h1>
+            <p data-i18n="hero.subtitle">
+                A step-by-step interactive guide to self-host your files like Google Drive 
+                and run your own AI models — with a beautiful UI, on Windows, macOS, or Linux.
+            </p>
+            <div class="hero-buttons">
+                <a href="#setup" class="btn btn-primary"><span>🚀</span> <span data-i18n="hero.cta1">Start Building</span></a>
+                <a href="#overview" class="btn btn-secondary"><span>📖</span> <span data-i18n="hero.cta2">Read Overview</span></a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">~2hrs</div>
+                    <div class="hero-stat-label" data-i18n="hero.stat1">Setup Time</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">$0</div>
+                    <div class="hero-stat-label" data-i18n="hero.stat2">Software Cost</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">100%</div>
+                    <div class="hero-stat-label" data-i18n="hero.stat3">Your Data, Your Control</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OS Selector -->
+    <div class="os-selector" id="osSelector">
+        <div class="os-selector-inner">
+            <button class="os-btn active" data-os="linux" onclick="selectOS('linux')">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.466-.67.74-.4 1.38-.935 1.96-1.468.585-.533 1.064-1.198 1.078-1.934.01-.413-.154-.818-.404-1.135l-.003-.003a2.21 2.21 0 00-.195-.197c-.09-.079-.19-.065-.260-.197-.07-.128-.05-.18.035-.39.132-.33.067-.67-.073-.958a3.282 3.282 0 00-.533-.722c-.2-.201-.463-.329-.602-.467a1.644 1.644 0 01-.09-.091c-.136-.271-.068-.44.003-.518.137-.135.153-.39.097-.74a4.726 4.726 0 00-.395-1.263c-.105-.207-.214-.33-.165-.534.237-.79.194-1.51-.123-2.327-.397-1.02-.94-1.653-1.394-2.372-.453-.718-.86-1.399-1.076-2.099-.19-.62-.282-1.262-.287-1.896-.005-.964.077-1.723-.34-2.513C14.89 1.015 13.82.002 12.504 0z"/></svg>
+                Linux
+            </button>
+            <button class="os-btn" data-os="macos" onclick="selectOS('macos')">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                macOS
+            </button>
+            <button class="os-btn" data-os="windows" onclick="selectOS('windows')">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+                Windows
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Section -->
+    <section class="section" id="overview">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">📋 <span data-i18n="nav.overview">Overview</span></div>
+                <h2 class="section-title" data-i18n="overview.title">What We're Building</h2>
+                <p class="section-subtitle" data-i18n="overview.subtitle">A complete self-hosted ecosystem — your personal cloud storage + AI assistant, all running on your own hardware.</p>
+            </div>
+
+            <div class="arch-grid fade-up">
+                <div class="arch-card">
+                    <div class="arch-icon blue">📁</div>
+                    <h3 data-i18n="overview.card1.title">Personal Cloud Storage</h3>
+                    <p data-i18n="overview.card1.desc">Nextcloud-powered file storage with sync, sharing, mobile apps, and full-text search — like Google Drive, but yours.</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-icon purple">🤖</div>
+                    <h3 data-i18n="overview.card2.title">Local AI Models</h3>
+                    <p data-i18n="overview.card2.desc">Run LLaMA, Mistral, Phi, and other open-source AI models locally with Ollama — no API fees, full privacy.</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-icon green">💬</div>
+                    <h3 data-i18n="overview.card3.title">Chat Interface</h3>
+                    <p data-i18n="overview.card3.desc">Open WebUI gives you a ChatGPT-like experience to interact with your AI models through a polished web app.</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-icon pink">🔍</div>
+                    <h3 data-i18n="overview.card4.title">Smart File Search</h3>
+                    <p data-i18n="overview.card4.desc">Full-text search across all your files, photos, and documents — instantly find anything you've stored.</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-icon orange">🔒</div>
+                    <h3 data-i18n="overview.card5.title">Secure & Private</h3>
+                    <p data-i18n="overview.card5.desc">HTTPS encryption, user authentication, and everything runs on your hardware — zero data leaves your control.</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-icon cyan">🌐</div>
+                    <h3 data-i18n="overview.card6.title">Remote Access</h3>
+                    <p data-i18n="overview.card6.desc">Access from anywhere via secure tunnels or VPN — your cloud, available on any device, anywhere.</p>
+                </div>
+            </div>
+
+            <div class="arch-diagram fade-up">
+                <h3 style="margin-bottom: 24px; font-size: 1.2rem;" data-i18n="overview.arch.title">System Architecture</h3>
+                <div class="arch-diagram-layers">
+                    <div class="arch-layer l1">🌐 <span data-i18n="overview.arch.layer1">Browser / Mobile App — Your Access Point</span></div>
+                    <div class="arch-arrow">↕</div>
+                    <div class="arch-layer l2">🔀 <span data-i18n="overview.arch.layer2">Reverse Proxy (Caddy/Nginx) — HTTPS & Routing</span></div>
+                    <div class="arch-arrow">↕</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="arch-layer l3">📁 <span data-i18n="overview.arch.layer3a">Nextcloud — File Storage</span></div>
+                        <div class="arch-layer l4">💬 <span data-i18n="overview.arch.layer3b">Open WebUI — AI Chat</span></div>
+                    </div>
+                    <div class="arch-arrow">↕</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="arch-layer l5">🗄️ <span data-i18n="overview.arch.layer4a">MariaDB — Database</span></div>
+                        <div class="arch-layer l5">🤖 <span data-i18n="overview.arch.layer4b">Ollama — AI Runtime</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Requirements Section -->
+    <section class="section" id="requirements">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">⚙️ <span data-i18n="nav.requirements">Requirements</span></div>
+                <h2 class="section-title" data-i18n="requirements.title">What You Need</h2>
+                <p class="section-subtitle" data-i18n="requirements.subtitle">Hardware and software requirements to get started. You might already have everything!</p>
+            </div>
+
+            <div class="req-grid fade-up">
+                <div class="req-card">
+                    <div class="req-card-header">
+                        <div class="req-card-icon" style="background: rgba(79, 143, 255, 0.15);">💻</div>
+                        <h3><span data-i18n="requirements.min.title">Hardware — Minimum</span><br><span data-i18n="requirements.min.subtitle">For basic setup</span></h3>
+                    </div>
+                    <ul class="req-list">
+                        <li><span class="check">✓</span> <strong>CPU:</strong> <span data-i18n="requirements.min.cpu">Any modern 4-core processor</span></li>
+                        <li><span class="check">✓</span> <strong>RAM:</strong> <span data-i18n="requirements.min.ram">8 GB minimum (16 GB recommended)</span></li>
+                        <li><span class="check">✓</span> <strong>Storage:</strong> <span data-i18n="requirements.min.storage">256 GB SSD for OS</span></li>
+                        <li><span class="check">✓</span> <strong data-i18n="requirements.min.data">Data Drive:</strong> <span>1+ TB HDD/SSD</span></li>
+                        <li><span class="check">✓</span> <strong>Network:</strong> <span data-i18n="requirements.min.network">Ethernet connection</span></li>
+                    </ul>
+                </div>
+
+                <div class="req-card">
+                    <div class="req-card-header">
+                        <div class="req-card-icon" style="background: rgba(139, 92, 246, 0.15);">🚀</div>
+                        <h3><span data-i18n="requirements.rec.title">Hardware — Recommended</span><br><span data-i18n="requirements.rec.subtitle">For AI models + heavy use</span></h3>
+                    </div>
+                    <ul class="req-list">
+                        <li><span class="check">✓</span> <strong>CPU:</strong> <span data-i18n="requirements.rec.cpu">8+ core processor</span></li>
+                        <li><span class="check">✓</span> <strong>RAM:</strong> <span data-i18n="requirements.rec.ram">32 GB DDR4/DDR5</span></li>
+                        <li><span class="check">✓</span> <strong>GPU:</strong> <span data-i18n="requirements.rec.gpu">NVIDIA RTX 3060+ with 8GB+ VRAM</span></li>
+                        <li><span class="check">✓</span> <strong>Storage:</strong> <span data-i18n="requirements.rec.storage">500 GB NVMe SSD</span></li>
+                        <li><span class="check">✓</span> <strong>Network:</strong> <span data-i18n="requirements.rec.network">Gigabit Ethernet</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="fade-up" style="margin-top: 3rem;">
+                <h3 style="text-align: center; margin-bottom: 1.5rem; font-size: 1.3rem;" data-i18n="requirements.table.title">AI Model Requirements</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="requirements.table.model">Model</th>
+                            <th data-i18n="requirements.table.size">Size</th>
+                            <th data-i18n="requirements.table.ram">RAM Needed</th>
+                            <th data-i18n="requirements.table.vram">GPU VRAM</th>
+                            <th data-i18n="requirements.table.quality">Quality</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Phi-3 Mini (3.8B)</td><td>2.3 GB</td><td>8 GB</td><td>4 GB+</td><td>⭐⭐⭐</td></tr>
+                        <tr><td>Llama 3.1 8B</td><td>4.7 GB</td><td>16 GB</td><td>8 GB+</td><td>⭐⭐⭐⭐</td></tr>
+                        <tr><td>Mistral 7B</td><td>4.1 GB</td><td>16 GB</td><td>8 GB+</td><td>⭐⭐⭐⭐</td></tr>
+                        <tr><td>Llama 3.1 70B</td><td>40 GB</td><td>64 GB</td><td>48 GB+</td><td>⭐⭐⭐⭐⭐</td></tr>
+                        <tr><td>Gemma 2 9B</td><td>5.4 GB</td><td>16 GB</td><td>8 GB+</td><td>⭐⭐⭐⭐</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Setup Section -->
+    <section class="section" id="setup">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">🔧 <span data-i18n="setup.step">Step</span> 1</div>
+                <h2 class="section-title" data-i18n="setup.title">Base System Setup</h2>
+                <p class="section-subtitle" data-i18n="setup.subtitle">Install Docker and prepare your system. This is the foundation everything else builds on.</p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step fade-up">
+                    <div class="step-number">1.1</div>
+                    <div class="step-content">
+                        <h3 class="step-title" data-i18n="setup.docker.title">Install Docker & Docker Compose</h3>
+                        <p class="step-desc" data-i18n="setup.docker.desc">Docker containers let us run each service in isolation. This is the cleanest way to manage everything.</p>
+
+                        <div class="os-content active" data-os="linux">
+                            <div class="info-box tip">
+                                <span class="info-box-icon">💡</span>
+                                <span data-i18n="setup.docker.linux.tip">These commands work on Ubuntu/Debian. For other distros, check the Docker docs.</span>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                                    <span class="code-lang">bash</span>
+                                    <button class="code-copy" onclick="copyCode(this)" data-i18n="copy">Copy</button>
+                                </div>
+                                <div class="code-body">
+<pre><span class="comment"># Update system packages</span>
+<span class="keyword">sudo</span> apt update && <span class="keyword">sudo</span> apt upgrade -y
+
+<span class="comment"># Install Docker using the official script</span>
+<span class="keyword">curl</span> <span class="flag">-fsSL</span> https://get.docker.com <span class="flag">|</span> <span class="keyword">sudo</span> sh
+
+<span class="comment"># Add your user to the docker group</span>
+<span class="keyword">sudo</span> usermod <span class="flag">-aG</span> docker <span class="variable">$USER</span>
+
+<span class="comment"># Log out and back in, then verify</span>
+<span class="keyword">docker</span> <span class="flag">--version</span>
+<span class="keyword">docker</span> compose <span class="flag">version</span>
+
+<span class="comment"># Enable Docker to start on boot</span>
+<span class="keyword">sudo</span> systemctl enable docker</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="os-content" data-os="macos">
+                            <div class="info-box info">
+                                <span class="info-box-icon">ℹ️</span>
+                                <span data-i18n="setup.docker.macos.tip">On macOS, Docker Desktop is the easiest way.</span>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                                    <span class="code-lang">terminal</span>
+                                    <button class="code-copy" onclick="copyCode(this)" data-i18n="copy">Copy</button>
+                                </div>
+                                <div class="code-body">
+<pre><span class="comment"># Install Docker Desktop via Homebrew</span>
+<span class="keyword">brew</span> install <span class="flag">--cask</span> docker
+
+<span class="comment"># Launch Docker Desktop, then verify:</span>
+<span class="keyword">docker</span> <span class="flag">--version</span>
+<span class="keyword">docker</span> compose <span class="flag">version</span></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="os-content" data-os="windows">
+                            <div class="info-box warning">
+                                <span class="info-box-icon">⚠️</span>
+                                <span data-i18n="setup.docker.windows.tip">You need Windows 10/11 Pro for Hyper-V. Home edition users: enable WSL2 instead.</span>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                                    <span class="code-lang">PowerShell (Admin)</span>
+                                    <button class="code-copy" onclick="copyCode(this)" data-i18n="copy">Copy</button>
+                                </div>
+                                <div class="code-body">
+<pre><span class="comment"># Enable WSL2</span>
+<span class="keyword">wsl</span> <span class="flag">--install</span>
+
+<span class="comment"># Restart, then set WSL2 as default</span>
+<span class="keyword">wsl</span> <span class="flag">--set-default-version</span> 2
+
+<span class="comment"># Install Docker Desktop via winget</span>
+<span class="keyword">winget</span> install <span class="flag">-e --id</span> Docker.DockerDesktop
+
+<span class="comment"># Verify after restart:</span>
+<span class="keyword">docker</span> <span class="flag">--version</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cloud Storage Section -->
+    <section class="section" id="cloud">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">☁️ <span data-i18n="setup.step">Step</span> 2</div>
+                <h2 class="section-title" data-i18n="cloud.title">Deploy Your Cloud Drive</h2>
+                <p class="section-subtitle" data-i18n="cloud.subtitle">Set up Nextcloud with a database — your personal Google Drive replacement.</p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step fade-up">
+                    <div class="step-number">2.1</div>
+                    <div class="step-content">
+                        <h3 class="step-title" data-i18n="cloud.compose.title">Create the Docker Compose File</h3>
+                        <p class="step-desc" data-i18n="cloud.compose.desc">This single file defines all services.</p>
+
+                        <div class="info-box warning">
+                            <span class="info-box-icon">⚠️</span>
+                            <span data-i18n="cloud.compose.warning">Important: Change all passwords below before deploying!</span>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                                <span class="code-lang">docker-compose.yml</span>
+                                <button class="code-copy" onclick="copyCode(this)" data-i18n="copy">Copy</button>
+                            </div>
+                            <div class="code-body">
+<pre><span class="keyword">version:</span> <span class="string">'3.8'</span>
+
+<span class="keyword">services:</span>
+  <span class="function">db:</span>
+    <span class="keyword">image:</span> mariadb:10.11
+    <span class="keyword">container_name:</span> nextcloud-db
+    <span class="keyword">restart:</span> always
+    <span class="keyword">environment:</span>
+      - <span class="variable">MYSQL_ROOT_PASSWORD</span>=<span class="string">CHANGE_ME!</span>
+      - <span class="variable">MYSQL_DATABASE</span>=<span class="string">nextcloud</span>
+      - <span class="variable">MYSQL_USER</span>=<span class="string">nextcloud</span>
+      - <span class="variable">MYSQL_PASSWORD</span>=<span class="string">CHANGE_ME!</span>
+
+  <span class="function">nextcloud:</span>
+    <span class="keyword">image:</span> nextcloud:latest
+    <span class="keyword">container_name:</span> nextcloud-app
+    <span class="keyword">restart:</span> always
+    <span class="keyword">ports:</span>
+      - <span class="string">"8080:80"</span>
+    <span class="keyword">depends_on:</span>
+      - <span class="string">db</span>
+
+  <span class="function">ollama:</span>
+    <span class="keyword">image:</span> ollama/ollama:latest
+    <span class="keyword">container_name:</span> ollama
+    <span class="keyword">restart:</span> always
+    <span class="keyword">ports:</span>
+      - <span class="string">"11434:11434"</span>
+
+  <span class="function">open-webui:</span>
+    <span class="keyword">image:</span> ghcr.io/open-webui/open-webui:main
+    <span class="keyword">container_name:</span> open-webui
+    <span class="keyword">restart:</span> always
+    <span class="keyword">ports:</span>
+      - <span class="string">"3000:8080"</span>
+    <span class="keyword">environment:</span>
+      - <span class="variable">OLLAMA_BASE_URL</span>=<span class="string">http://ollama:11434</span></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Server Section -->
+    <section class="section" id="ai">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">🤖 <span data-i18n="setup.step">Step</span> 3</div>
+                <h2 class="section-title" data-i18n="ai.title">Set Up Your AI Server</h2>
+                <p class="section-subtitle" data-i18n="ai.subtitle">Download and run AI models locally. Chat with AI privately, no subscriptions needed.</p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step fade-up">
+                    <div class="step-number">3.1</div>
+                    <div class="step-content">
+                        <h3 class="step-title" data-i18n="ai.models.title">Download AI Models with Ollama</h3>
+                        <p class="step-desc" data-i18n="ai.models.desc">Ollama is already running. Now let's download some models.</p>
+
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                                <span class="code-lang">bash / PowerShell</span>
+                                <button class="code-copy" onclick="copyCode(this)" data-i18n="copy">Copy</button>
+                            </div>
+                            <div class="code-body">
+<pre><span class="comment"># Download a small, fast model</span>
+<span class="keyword">docker</span> exec <span class="flag">-it</span> ollama <span class="keyword">ollama</span> pull <span class="string">phi3:mini</span>
+
+<span class="comment"># Download Llama 3.1 8B (recommended)</span>
+<span class="keyword">docker</span> exec <span class="flag">-it</span> ollama <span class="keyword">ollama</span> pull <span class="string">llama3.1:8b</span>
+
+<span class="comment"># Download Mistral 7B</span>
+<span class="keyword">docker</span> exec <span class="flag">-it</span> ollama <span class="keyword">ollama</span> pull <span class="string">mistral:7b</span>
+
+<span class="comment"># List downloaded models</span>
+<span class="keyword">docker</span> exec <span class="flag">-it</span> ollama <span class="keyword">ollama</span> list</pre>
+                            </div>
+                        </div>
+
+                        <div class="info-box tip">
+                            <span class="info-box-icon">⏱️</span>
+                            <span data-i18n="ai.models.tip">Model downloads can be large (2-40 GB). Phi3 Mini is ~2.3 GB and great to start with.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- UI Section -->
+    <section class="section" id="ui">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">🎨 <span data-i18n="setup.step">Step</span> 4</div>
+                <h2 class="section-title" data-i18n="ui.title">Polished Interface & Remote Access</h2>
+                <p class="section-subtitle" data-i18n="ui.subtitle">Set up HTTPS, a reverse proxy, and optional remote access.</p>
+            </div>
+
+            <div class="feature-grid fade-up">
+                <div class="feature-card">
+                    <div class="feature-card-img fc-1">📁</div>
+                    <div class="feature-card-body">
+                        <h3 data-i18n="result.card1.title">Your Personal Google Drive</h3>
+                        <p data-i18n="result.card1.desc">Upload, sync, and share files across all devices.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-img fc-2">🤖</div>
+                    <div class="feature-card-body">
+                        <h3 data-i18n="result.card2.title">Private AI Assistant</h3>
+                        <p data-i18n="result.card2.desc">ChatGPT-like conversations running on your hardware.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-img fc-3">🔍</div>
+                    <div class="feature-card-body">
+                        <h3 data-i18n="result.card3.title">Smart Search Everything</h3>
+                        <p data-i18n="result.card3.desc">Full-text search across all your documents.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-img fc-4">🌍</div>
+                    <div class="feature-card-body">
+                        <h3 data-i18n="result.card4.title">Access Anywhere</h3>
+                        <p data-i18n="result.card4.desc">Secure remote access via VPN or tunnels.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section" id="faq">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-label">❓ <span data-i18n="nav.faq">FAQ</span></div>
+                <h2 class="section-title" data-i18n="faq.title">Frequently Asked Questions</h2>
+                <p class="section-subtitle" data-i18n="faq.subtitle">Common questions and troubleshooting tips.</p>
+            </div>
+
+            <div class="faq-list fade-up">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span data-i18n="faq.q1">How much does this cost to run?</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" data-i18n="faq.a1">All software is 100% free and open source. The only cost is hardware and electricity (~$1-2/month).</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span data-i18n="faq.q2">Can I run this on a Raspberry Pi?</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" data-i18n="faq.a2">Yes, partially! A Raspberry Pi 5 can run Nextcloud for file storage, but AI models need more resources.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span data-i18n="faq.q3">Is my data safe?</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" data-i18n="faq.a3">With daily backups, your data is protected. Use RAID and off-site backups for extra safety.</div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span data-i18n="faq.q4">How do I update everything?</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner" data-i18n="faq.a4">Run docker compose pull then docker compose up -d to update all services.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div style="font-size: 2rem; margin-bottom: 16px;">☁️🤖</div>
+            <p style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">HomeCloud AI — <span data-i18n="footer.title">Self-Hosted Guide</span></p>
+            <p data-i18n="footer.desc">Built with open-source software. Your data, your hardware, your rules.</p>
+            <div class="footer-links" style="margin-top: 20px;">
+                <a href="https://nextcloud.com" target="_blank">Nextcloud</a>
+                <a href="https://ollama.ai" target="_blank">Ollama</a>
+                <a href="https://openwebui.com" target="_blank">Open WebUI</a>
+                <a href="https://caddyserver.com" target="_blank">Caddy</a>
+                <a href="https://docker.com" target="_blank">Docker</a>
+            </div>
+            <p style="margin-top: 24px; font-size: 0.8rem;">© 2026 — <span data-i18n="footer.license">Open source guide.</span></p>
+        </div>
+    </footer>
+
+    <!-- Chatbot Toggle Button -->
+    <button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()">💬</button>
+
+    <!-- Chatbot Container -->
+    <div class="chatbot-container" id="chatbotContainer">
+        <div class="chatbot-header">
+            <div class="chatbot-avatar">🤖</div>
+            <div class="chatbot-info">
+                <h3 data-i18n="chatbot.name">HomeCloud Assistant</h3>
+                <div class="chatbot-status">
+                    <span class="dot"></span>
+                    <p data-i18n="chatbot.status">Online — Ready to help</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="chat-message bot">
+                <div class="chat-message-avatar">🤖</div>
+                <div class="chat-message-content" id="chatWelcome" data-i18n="chatbot.welcome">
+                    Hi! 👋 I'm your HomeCloud Assistant. I can help you with questions about setting up your personal cloud server, AI models, Docker, Nextcloud, and more. What would you like to know?
+                </div>
+            </div>
+        </div>
+
+        <div class="chatbot-suggestions" id="chatSuggestions">
+            <button class="chat-suggestion" onclick="askSuggestion(this)" data-i18n="chatbot.suggestion1">What hardware do I need?</button>
+            <button class="chat-suggestion" onclick="askSuggestion(this)" data-i18n="chatbot.suggestion2">How to install Docker?</button>
+            <button class="chat-suggestion" onclick="askSuggestion(this)" data-i18n="chatbot.suggestion3">Best AI model to start?</button>
+        </div>
+
+        <div class="chatbot-input">
+            <input type="text" id="chatInput" data-i18n-placeholder="chatbot.placeholder" placeholder="Type your question..." onkeypress="handleChatKeypress(event)">
+            <button onclick="sendChatMessage()" id="chatSendBtn">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // ─── Complete Translations ───
+        const translations = {
+            en: {
+                "nav.overview": "Overview",
+                "nav.requirements": "Requirements",
+                "nav.setup": "Setup",
+                "nav.cloud": "Cloud Drive",
+                "nav.ai": "AI Server",
+                "nav.interface": "Interface",
+                "nav.faq": "FAQ",
+                "hero.badge": "Complete Guide • 2026 Edition",
+                "hero.title1": "Build Your Own",
+                "hero.title2": "Personal Cloud",
+                "hero.title3": "AI Server",
+                "hero.subtitle": "A step-by-step interactive guide to self-host your files like Google Drive and run your own AI models — with a beautiful UI, on Windows, macOS, or Linux.",
+                "hero.cta1": "Start Building",
+                "hero.cta2": "Read Overview",
+                "hero.stat1": "Setup Time",
+                "hero.stat2": "Software Cost",
+                "hero.stat3": "Your Data, Your Control",
+                "overview.title": "What We're Building",
+                "overview.subtitle": "A complete self-hosted ecosystem — your personal cloud storage + AI assistant, all running on your own hardware.",
+                "overview.card1.title": "Personal Cloud Storage",
+                "overview.card1.desc": "Nextcloud-powered file storage with sync, sharing, mobile apps, and full-text search — like Google Drive, but yours.",
+                "overview.card2.title": "Local AI Models",
+                "overview.card2.desc": "Run LLaMA, Mistral, Phi, and other open-source AI models locally with Ollama — no API fees, full privacy.",
+                "overview.card3.title": "Chat Interface",
+                "overview.card3.desc": "Open WebUI gives you a ChatGPT-like experience to interact with your AI models through a polished web app.",
+                "overview.card4.title": "Smart File Search",
+                "overview.card4.desc": "Full-text search across all your files, photos, and documents — instantly find anything you've stored.",
+                "overview.card5.title": "Secure & Private",
+                "overview.card5.desc": "HTTPS encryption, user authentication, and everything runs on your hardware — zero data leaves your control.",
+                "overview.card6.title": "Remote Access",
+                "overview.card6.desc": "Access from anywhere via secure tunnels or VPN — your cloud, available on any device, anywhere.",
+                "overview.arch.title": "System Architecture",
+                "overview.arch.layer1": "Browser / Mobile App — Your Access Point",
+                "overview.arch.layer2": "Reverse Proxy (Caddy/Nginx) — HTTPS & Routing",
+                "overview.arch.layer3a": "Nextcloud — File Storage",
+                "overview.arch.layer3b": "Open WebUI — AI Chat",
+                "overview.arch.layer4a": "MariaDB — Database",
+                "overview.arch.layer4b": "Ollama — AI Runtime",
+                "requirements.title": "What You Need",
+                "requirements.subtitle": "Hardware and software requirements to get started. You might already have everything!",
+                "requirements.min.title": "Hardware — Minimum",
+                "requirements.min.subtitle": "For basic setup",
+                "requirements.min.cpu": "Any modern 4-core processor",
+                "requirements.min.ram": "8 GB minimum (16 GB recommended)",
+                "requirements.min.storage": "256 GB SSD for OS",
+                "requirements.min.data": "Data Drive",
+                "requirements.min.network": "Ethernet connection",
+                "requirements.rec.title": "Hardware — Recommended",
+                "requirements.rec.subtitle": "For AI models + heavy use",
+                "requirements.rec.cpu": "8+ core processor",
+                "requirements.rec.ram": "32 GB DDR4/DDR5",
+                "requirements.rec.gpu": "NVIDIA RTX 3060+ with 8GB+ VRAM",
+                "requirements.rec.storage": "500 GB NVMe SSD",
+                "requirements.rec.network": "Gigabit Ethernet",
+                "requirements.table.title": "AI Model Requirements",
+                "requirements.table.model": "Model",
+                "requirements.table.size": "Size",
+                "requirements.table.ram": "RAM Needed",
+                "requirements.table.vram": "GPU VRAM",
+                "requirements.table.quality": "Quality",
+                "setup.step": "Step",
+                "setup.title": "Base System Setup",
+                "setup.subtitle": "Install Docker and prepare your system. This is the foundation everything else builds on.",
+                "setup.docker.title": "Install Docker & Docker Compose",
+                "setup.docker.desc": "Docker containers let us run each service in isolation. This is the cleanest way to manage everything.",
+                "setup.docker.linux.tip": "These commands work on Ubuntu/Debian. For other distros, check the Docker docs.",
+                "setup.docker.macos.tip": "On macOS, Docker Desktop is the easiest way.",
+                "setup.docker.windows.tip": "You need Windows 10/11 Pro for Hyper-V. Home edition users: enable WSL2 instead.",
+                "cloud.title": "Deploy Your Cloud Drive",
+                "cloud.subtitle": "Set up Nextcloud with a database — your personal Google Drive replacement.",
+                "cloud.compose.title": "Create the Docker Compose File",
+                "cloud.compose.desc": "This single file defines all services.",
+                "cloud.compose.warning": "Important: Change all passwords below before deploying!",
+                "ai.title": "Set Up Your AI Server",
+                "ai.subtitle": "Download and run AI models locally. Chat with AI privately, no subscriptions needed.",
+                "ai.models.title": "Download AI Models with Ollama",
+                "ai.models.desc": "Ollama is already running. Now let's download some models.",
+                "ai.models.tip": "Model downloads can be large (2-40 GB). Phi3 Mini is ~2.3 GB and great to start with.",
+                "ui.title": "Polished Interface & Remote Access",
+                "ui.subtitle": "Set up HTTPS, a reverse proxy, and optional remote access.",
+                "result.card1.title": "Your Personal Google Drive",
+                "result.card1.desc": "Upload, sync, and share files across all devices.",
+                "result.card2.title": "Private AI Assistant",
+                "result.card2.desc": "ChatGPT-like conversations running on your hardware.",
+                "result.card3.title": "Smart Search Everything",
+                "result.card3.desc": "Full-text search across all your documents.",
+                "result.card4.title": "Access Anywhere",
+                "result.card4.desc": "Secure remote access via VPN or tunnels.",
+                "faq.title": "Frequently Asked Questions",
+                "faq.subtitle": "Common questions and troubleshooting tips.",
+                "faq.q1": "How much does this cost to run?",
+                "faq.a1": "All software is 100% free and open source. The only cost is hardware and electricity (~$1-2/month).",
+                "faq.q2": "Can I run this on a Raspberry Pi?",
+                "faq.a2": "Yes, partially! A Raspberry Pi 5 can run Nextcloud for file storage, but AI models need more resources.",
+                "faq.q3": "Is my data safe?",
+                "faq.a3": "With daily backups, your data is protected. Use RAID and off-site backups for extra safety.",
+                "faq.q4": "How do I update everything?",
+                "faq.a4": "Run docker compose pull then docker compose up -d to update all services.",
+                "footer.title": "Self-Hosted Guide",
+                "footer.desc": "Built with open-source software. Your data, your hardware, your rules.",
+                "footer.license": "Open source guide.",
+                "copy": "Copy",
+                "copied": "Copied!",
+                "chatbot.name": "HomeCloud Assistant",
+                "chatbot.status": "Online — Ready to help",
+                "chatbot.welcome": "Hi! 👋 I'm your HomeCloud Assistant. I can help you with questions about setting up your personal cloud server, AI models, Docker, Nextcloud, and more. What would you like to know?",
+                "chatbot.suggestion1": "What hardware do I need?",
+                "chatbot.suggestion2": "How to install Docker?",
+                "chatbot.suggestion3": "Best AI model to start?",
+                "chatbot.placeholder": "Type your question..."
+            },
+            es: {
+                "nav.overview": "Resumen",
+                "nav.requirements": "Requisitos",
+                "nav.setup": "Instalación",
+                "nav.cloud": "Nube",
+                "nav.ai": "Servidor IA",
+                "nav.interface": "Interfaz",
+                "nav.faq": "Preguntas",
+                "hero.badge": "Guía Completa • Edición 2026",
+                "hero.title1": "Construye Tu Propia",
+                "hero.title2": "Nube Personal",
+                "hero.title3": "Servidor de IA",
+                "hero.subtitle": "Una guía interactiva paso a paso para alojar tus archivos como Google Drive y ejecutar tus propios modelos de IA — con una interfaz hermosa, en Windows, macOS o Linux.",
+                "hero.cta1": "Comenzar",
+                "hero.cta2": "Ver Resumen",
+                "hero.stat1": "Tiempo de Instalación",
+                "hero.stat2": "Costo del Software",
+                "hero.stat3": "Tus Datos, Tu Control",
+                "overview.title": "Lo Que Construiremos",
+                "overview.subtitle": "Un ecosistema autoalojado completo — tu almacenamiento personal en la nube + asistente de IA, todo en tu propio hardware.",
+                "overview.card1.title": "Almacenamiento en la Nube",
+                "overview.card1.desc": "Almacenamiento con Nextcloud con sincronización, apps móviles y búsqueda — como Google Drive, pero tuyo.",
+                "overview.card2.title": "Modelos de IA Locales",
+                "overview.card2.desc": "Ejecuta LLaMA, Mistral, Phi y otros modelos de IA localmente con Ollama — sin costos de API, privacidad total.",
+                "overview.card3.title": "Interfaz de Chat",
+                "overview.card3.desc": "Open WebUI te da una experiencia tipo ChatGPT para interactuar con tus modelos de IA.",
+                "overview.card4.title": "Búsqueda Inteligente",
+                "overview.card4.desc": "Búsqueda de texto completo en todos tus archivos — encuentra cualquier cosa al instante.",
+                "overview.card5.title": "Seguro y Privado",
+                "overview.card5.desc": "Cifrado HTTPS, autenticación de usuarios, todo en tu hardware — ningún dato sale de tu control.",
+                "overview.card6.title": "Acceso Remoto",
+                "overview.card6.desc": "Accede desde cualquier lugar a través de túneles seguros o VPN.",
+                "overview.arch.title": "Arquitectura del Sistema",
+                "overview.arch.layer1": "Navegador / App Móvil — Tu Punto de Acceso",
+                "overview.arch.layer2": "Proxy Inverso (Caddy/Nginx) — HTTPS y Enrutamiento",
+                "overview.arch.layer3a": "Nextcloud — Almacenamiento",
+                "overview.arch.layer3b": "Open WebUI — Chat IA",
+                "overview.arch.layer4a": "MariaDB — Base de Datos",
+                "overview.arch.layer4b": "Ollama — Motor de IA",
+                "requirements.title": "Lo Que Necesitas",
+                "requirements.subtitle": "Requisitos de hardware y software. ¡Puede que ya tengas todo!",
+                "requirements.min.title": "Hardware — Mínimo",
+                "requirements.min.subtitle": "Para configuración básica",
+                "requirements.min.cpu": "Cualquier procesador moderno de 4 núcleos",
+                "requirements.min.ram": "8 GB mínimo (16 GB recomendado)",
+                "requirements.min.storage": "256 GB SSD para el SO",
+                "requirements.min.data": "Disco de Datos",
+                "requirements.min.network": "Conexión Ethernet",
+                "requirements.rec.title": "Hardware — Recomendado",
+                "requirements.rec.subtitle": "Para modelos IA + uso intensivo",
+                "requirements.rec.cpu": "Procesador de 8+ núcleos",
+                "requirements.rec.ram": "32 GB DDR4/DDR5",
+                "requirements.rec.gpu": "NVIDIA RTX 3060+ con 8GB+ VRAM",
+                "requirements.rec.storage": "500 GB NVMe SSD",
+                "requirements.rec.network": "Ethernet Gigabit",
+                "requirements.table.title": "Requisitos de Modelos IA",
+                "requirements.table.model": "Modelo",
+                "requirements.table.size": "Tamaño",
+                "requirements.table.ram": "RAM Necesaria",
+                "requirements.table.vram": "VRAM GPU",
+                "requirements.table.quality": "Calidad",
+                "setup.step": "Paso",
+                "setup.title": "Configuración Base del Sistema",
+                "setup.subtitle": "Instala Docker y prepara tu sistema. Esta es la base sobre la que se construye todo.",
+                "setup.docker.title": "Instalar Docker y Docker Compose",
+                "setup.docker.desc": "Los contenedores Docker permiten ejecutar cada servicio de forma aislada.",
+                "setup.docker.linux.tip": "Estos comandos funcionan en Ubuntu/Debian. Para otras distros, consulta la documentación de Docker.",
+                "setup.docker.macos.tip": "En macOS, Docker Desktop es la forma más fácil.",
+                "setup.docker.windows.tip": "Necesitas Windows 10/11 Pro para Hyper-V. Usuarios de Home: activa WSL2.",
+                "cloud.title": "Despliega Tu Nube Personal",
+                "cloud.subtitle": "Configura Nextcloud con base de datos — tu reemplazo de Google Drive.",
+                "cloud.compose.title": "Crear el Archivo Docker Compose",
+                "cloud.compose.desc": "Este único archivo define todos los servicios.",
+                "cloud.compose.warning": "¡Importante: Cambia todas las contraseñas antes de desplegar!",
+                "ai.title": "Configura Tu Servidor de IA",
+                "ai.subtitle": "Descarga y ejecuta modelos de IA localmente. Chatea con IA de forma privada.",
+                "ai.models.title": "Descargar Modelos de IA con Ollama",
+                "ai.models.desc": "Ollama ya está ejecutándose. Ahora descarguemos algunos modelos.",
+                "ai.models.tip": "Las descargas pueden ser grandes (2-40 GB). Phi3 Mini es ~2.3 GB y excelente para empezar.",
+                "ui.title": "Interfaz Pulida y Acceso Remoto",
+                "ui.subtitle": "Configura HTTPS, proxy inverso y acceso remoto opcional.",
+                "result.card1.title": "Tu Google Drive Personal",
+                "result.card1.desc": "Sube, sincroniza y comparte archivos en todos tus dispositivos.",
+                "result.card2.title": "Asistente IA Privado",
+                "result.card2.desc": "Conversaciones tipo ChatGPT ejecutándose en tu hardware.",
+                "result.card3.title": "Búsqueda Inteligente",
+                "result.card3.desc": "Búsqueda de texto completo en todos tus documentos.",
+                "result.card4.title": "Acceso desde Cualquier Lugar",
+                "result.card4.desc": "Acceso remoto seguro via VPN o túneles.",
+                "faq.title": "Preguntas Frecuentes",
+                "faq.subtitle": "Preguntas comunes y consejos de solución de problemas.",
+                "faq.q1": "¿Cuánto cuesta mantener esto?",
+                "faq.a1": "Todo el software es 100% gratuito y de código abierto. El único costo es hardware y electricidad (~$1-2/mes).",
+                "faq.q2": "¿Puedo ejecutar esto en una Raspberry Pi?",
+                "faq.a2": "¡Sí, parcialmente! Una Raspberry Pi 5 puede ejecutar Nextcloud, pero los modelos de IA necesitan más recursos.",
+                "faq.q3": "¿Están seguros mis datos?",
+                "faq.a3": "Con copias de seguridad diarias, tus datos están protegidos. Usa RAID y backups externos para mayor seguridad.",
+                "faq.q4": "¿Cómo actualizo todo?",
+                "faq.a4": "Ejecuta docker compose pull y luego docker compose up -d para actualizar todos los servicios.",
+                "footer.title": "Guía de Autoalojamiento",
+                "footer.desc": "Construido con software de código abierto. Tus datos, tu hardware, tus reglas.",
+                "footer.license": "Guía de código abierto.",
+                "copy": "Copiar",
+                "copied": "¡Copiado!",
+                "chatbot.name": "Asistente HomeCloud",
+                "chatbot.status": "En línea — Listo para ayudar",
+                "chatbot.welcome": "¡Hola! 👋 Soy tu Asistente HomeCloud. Puedo ayudarte con preguntas sobre la configuración de tu servidor de nube personal, modelos de IA, Docker, Nextcloud y más. ¿Qué te gustaría saber?",
+                "chatbot.suggestion1": "¿Qué hardware necesito?",
+                "chatbot.suggestion2": "¿Cómo instalar Docker?",
+                "chatbot.suggestion3": "¿Mejor modelo de IA?",
+                "chatbot.placeholder": "Escribe tu pregunta..."
+            },
+            de: {
+                "nav.overview": "Übersicht",
+                "nav.requirements": "Anforderungen",
+                "nav.setup": "Einrichtung",
+                "nav.cloud": "Cloud-Speicher",
+                "nav.ai": "KI-Server",
+                "nav.interface": "Oberfläche",
+                "nav.faq": "FAQ",
+                "hero.badge": "Vollständige Anleitung • 2026 Edition",
+                "hero.title1": "Erstelle Deine Eigene",
+                "hero.title2": "Persönliche Cloud",
+                "hero.title3": "KI-Server",
+                "hero.subtitle": "Eine interaktive Schritt-für-Schritt-Anleitung zum Selbsthosten deiner Dateien wie Google Drive und zum Ausführen eigener KI-Modelle — auf Windows, macOS oder Linux.",
+                "hero.cta1": "Jetzt Starten",
+                "hero.cta2": "Übersicht Lesen",
+                "hero.stat1": "Einrichtungszeit",
+                "hero.stat2": "Softwarekosten",
+                "hero.stat3": "Deine Daten, Deine Kontrolle",
+                "overview.title": "Was Wir Erstellen",
+                "overview.subtitle": "Ein komplettes selbstgehostetes Ökosystem — dein persönlicher Cloud-Speicher + KI-Assistent, alles auf deiner eigenen Hardware.",
+                "overview.card1.title": "Persönlicher Cloud-Speicher",
+                "overview.card1.desc": "Nextcloud-basierter Dateispeicher mit Sync, Sharing, Mobile Apps und Volltextsuche — wie Google Drive, aber deins.",
+                "overview.card2.title": "Lokale KI-Modelle",
+                "overview.card2.desc": "Führe LLaMA, Mistral, Phi und andere Open-Source KI-Modelle lokal mit Ollama aus — keine API-Kosten, volle Privatsphäre.",
+                "overview.card3.title": "Chat-Oberfläche",
+                "overview.card3.desc": "Open WebUI bietet dir ein ChatGPT-ähnliches Erlebnis für deine KI-Modelle.",
+                "overview.card4.title": "Intelligente Dateisuche",
+                "overview.card4.desc": "Volltextsuche über alle deine Dateien, Fotos und Dokumente — finde alles sofort.",
+                "overview.card5.title": "Sicher & Privat",
+                "overview.card5.desc": "HTTPS-Verschlüsselung, Benutzerauthentifizierung, alles auf deiner Hardware — keine Daten verlassen deine Kontrolle.",
+                "overview.card6.title": "Fernzugriff",
+                "overview.card6.desc": "Zugriff von überall über sichere Tunnel oder VPN — deine Cloud, auf jedem Gerät verfügbar.",
+                "overview.arch.title": "Systemarchitektur",
+                "overview.arch.layer1": "Browser / Mobile App — Dein Zugangspunkt",
+                "overview.arch.layer2": "Reverse Proxy (Caddy/Nginx) — HTTPS & Routing",
+                "overview.arch.layer3a": "Nextcloud — Dateispeicher",
+                "overview.arch.layer3b": "Open WebUI — KI-Chat",
+                "overview.arch.layer4a": "MariaDB — Datenbank",
+                "overview.arch.layer4b": "Ollama — KI-Runtime",
+                "requirements.title": "Was Du Brauchst",
+                "requirements.subtitle": "Hardware- und Softwareanforderungen. Du hast vielleicht schon alles!",
+                "requirements.min.title": "Hardware — Minimum",
+                "requirements.min.subtitle": "Für Basis-Setup",
+                "requirements.min.cpu": "Jeder moderne 4-Kern-Prozessor",
+                "requirements.min.ram": "8 GB Minimum (16 GB empfohlen)",
+                "requirements.min.storage": "256 GB SSD für das OS",
+                "requirements.min.data": "Datenlaufwerk",
+                "requirements.min.network": "Ethernet-Verbindung",
+                "requirements.rec.title": "Hardware — Empfohlen",
+                "requirements.rec.subtitle": "Für KI-Modelle + intensive Nutzung",
+                "requirements.rec.cpu": "8+ Kern Prozessor",
+                "requirements.rec.ram": "32 GB DDR4/DDR5",
+                "requirements.rec.gpu": "NVIDIA RTX 3060+ mit 8GB+ VRAM",
+                "requirements.rec.storage": "500 GB NVMe SSD",
+                "requirements.rec.network": "Gigabit Ethernet",
+                "requirements.table.title": "KI-Modell-Anforderungen",
+                "requirements.table.model": "Modell",
+                "requirements.table.size": "Größe",
+                "requirements.table.ram": "RAM Benötigt",
+                "requirements.table.vram": "GPU VRAM",
+                "requirements.table.quality": "Qualität",
+                "setup.step": "Schritt",
+                "setup.title": "Basis-System-Einrichtung",
+                "setup.subtitle": "Installiere Docker und bereite dein System vor. Das ist die Grundlage für alles Weitere.",
+                "setup.docker.title": "Docker & Docker Compose Installieren",
+                "setup.docker.desc": "Docker-Container ermöglichen es, jeden Dienst isoliert auszuführen.",
+                "setup.docker.linux.tip": "Diese Befehle funktionieren auf Ubuntu/Debian. Für andere Distros siehe Docker-Docs.",
+                "setup.docker.macos.tip": "Auf macOS ist Docker Desktop am einfachsten.",
+                "setup.docker.windows.tip": "Du brauchst Windows 10/11 Pro für Hyper-V. Home-Nutzer: aktiviere WSL2.",
+                "cloud.title": "Deine Cloud-Speicherung Bereitstellen",
+                "cloud.subtitle": "Richte Nextcloud mit Datenbank ein — dein persönlicher Google Drive Ersatz.",
+                "cloud.compose.title": "Docker Compose Datei Erstellen",
+                "cloud.compose.desc": "Diese einzelne Datei definiert alle Dienste.",
+                "cloud.compose.warning": "Wichtig: Ändere alle Passwörter vor dem Deployment!",
+                "ai.title": "Deinen KI-Server Einrichten",
+                "ai.subtitle": "Lade KI-Modelle herunter und führe sie lokal aus. Chatte privat mit KI.",
+                "ai.models.title": "KI-Modelle mit Ollama Herunterladen",
+                "ai.models.desc": "Ollama läuft bereits. Jetzt laden wir einige Modelle herunter.",
+                "ai.models.tip": "Modell-Downloads können groß sein (2-40 GB). Phi3 Mini ist ~2.3 GB und gut zum Starten.",
+                "ui.title": "Polierte Oberfläche & Fernzugriff",
+                "ui.subtitle": "Richte HTTPS, Reverse Proxy und optionalen Fernzugriff ein.",
+                "result.card1.title": "Dein Persönliches Google Drive",
+                "result.card1.desc": "Lade hoch, synchronisiere und teile Dateien auf allen Geräten.",
+                "result.card2.title": "Privater KI-Assistent",
+                "result.card2.desc": "ChatGPT-ähnliche Gespräche auf deiner Hardware.",
+                "result.card3.title": "Intelligente Suche",
+                "result.card3.desc": "Volltextsuche in allen deinen Dokumenten.",
+                "result.card4.title": "Zugriff von Überall",
+                "result.card4.desc": "Sicherer Fernzugriff via VPN oder Tunnel.",
+                "faq.title": "Häufig Gestellte Fragen",
+                "faq.subtitle": "Häufige Fragen und Problemlösungstipps.",
+                "faq.q1": "Wie viel kostet der Betrieb?",
+                "faq.a1": "Alle Software ist 100% kostenlos und Open Source. Die einzigen Kosten sind Hardware und Strom (~1-2€/Monat).",
+                "faq.q2": "Kann ich das auf einem Raspberry Pi ausführen?",
+                "faq.a2": "Ja, teilweise! Ein Raspberry Pi 5 kann Nextcloud ausführen, aber KI-Modelle brauchen mehr Ressourcen.",
+                "faq.q3": "Sind meine Daten sicher?",
+                "faq.a3": "Mit täglichen Backups sind deine Daten geschützt. Nutze RAID und externe Backups für extra Sicherheit.",
+                "faq.q4": "Wie aktualisiere ich alles?",
+                "faq.a4": "Führe docker compose pull und dann docker compose up -d aus, um alle Dienste zu aktualisieren.",
+                "footer.title": "Selbsthosting-Anleitung",
+                "footer.desc": "Erstellt mit Open-Source-Software. Deine Daten, deine Hardware, deine Regeln.",
+                "footer.license": "Open-Source-Anleitung.",
+                "copy": "Kopieren",
+                "copied": "Kopiert!",
+                "chatbot.name": "HomeCloud Assistent",
+                "chatbot.status": "Online — Bereit zu helfen",
+                "chatbot.welcome": "Hallo! 👋 Ich bin dein HomeCloud Assistent. Ich kann dir bei Fragen zur Einrichtung deines persönlichen Cloud-Servers, KI-Modellen, Docker, Nextcloud und mehr helfen. Was möchtest du wissen?",
+                "chatbot.suggestion1": "Welche Hardware brauche ich?",
+                "chatbot.suggestion2": "Wie installiere ich Docker?",
+                "chatbot.suggestion3": "Bestes KI-Modell zum Start?",
+                "chatbot.placeholder": "Schreibe deine Frage..."
+            },
+            fr: {
+                "nav.overview": "Aperçu",
+                "nav.requirements": "Prérequis",
+                "nav.setup": "Installation",
+                "nav.cloud": "Cloud",
+                "nav.ai": "Serveur IA",
+                "nav.interface": "Interface",
+                "nav.faq": "FAQ",
+                "hero.badge": "Guide Complet • Édition 2026",
+                "hero.title1": "Construisez Votre",
+                "hero.title2": "Cloud Personnel",
+                "hero.title3": "Serveur IA",
+                "hero.subtitle": "Un guide interactif étape par étape pour héberger vos fichiers comme Google Drive et exécuter vos propres modèles d'IA — sur Windows, macOS ou Linux.",
+                "hero.cta1": "Commencer",
+                "hero.cta2": "Lire l'Aperçu",
+                "hero.stat1": "Temps d'Installation",
+                "hero.stat2": "Coût Logiciel",
+                "hero.stat3": "Vos Données, Votre Contrôle",
+                "overview.title": "Ce Que Nous Construisons",
+                "overview.subtitle": "Un écosystème auto-hébergé complet — votre stockage cloud personnel + assistant IA, le tout sur votre propre matériel.",
+                "overview.card1.title": "Stockage Cloud Personnel",
+                "overview.card1.desc": "Stockage de fichiers Nextcloud avec sync, partage, apps mobiles et recherche — comme Google Drive, mais le vôtre.",
+                "overview.card2.title": "Modèles IA Locaux",
+                "overview.card2.desc": "Exécutez LLaMA, Mistral, Phi et d'autres modèles IA localement avec Ollama — sans frais d'API, confidentialité totale.",
+                "overview.card3.title": "Interface de Chat",
+                "overview.card3.desc": "Open WebUI vous offre une expérience ChatGPT pour interagir avec vos modèles IA.",
+                "overview.card4.title": "Recherche Intelligente",
+                "overview.card4.desc": "Recherche plein texte dans tous vos fichiers — trouvez tout instantanément.",
+                "overview.card5.title": "Sécurisé & Privé",
+                "overview.card5.desc": "Chiffrement HTTPS, authentification, tout sur votre matériel — aucune donnée ne quitte votre contrôle.",
+                "overview.card6.title": "Accès Distant",
+                "overview.card6.desc": "Accès de partout via tunnels sécurisés ou VPN — votre cloud, disponible partout.",
+                "overview.arch.title": "Architecture du Système",
+                "overview.arch.layer1": "Navigateur / App Mobile — Votre Point d'Accès",
+                "overview.arch.layer2": "Proxy Inverse (Caddy/Nginx) — HTTPS & Routage",
+                "overview.arch.layer3a": "Nextcloud — Stockage",
+                "overview.arch.layer3b": "Open WebUI — Chat IA",
+                "overview.arch.layer4a": "MariaDB — Base de Données",
+                "overview.arch.layer4b": "Ollama — Moteur IA",
+                "requirements.title": "Ce Dont Vous Avez Besoin",
+                "requirements.subtitle": "Prérequis matériels et logiciels. Vous avez peut-être déjà tout !",
+                "requirements.min.title": "Matériel — Minimum",
+                "requirements.min.subtitle": "Pour configuration de base",
+                "requirements.min.cpu": "Tout processeur moderne 4 cœurs",
+                "requirements.min.ram": "8 Go minimum (16 Go recommandé)",
+                "requirements.min.storage": "256 Go SSD pour l'OS",
+                "requirements.min.data": "Disque de Données",
+                "requirements.min.network": "Connexion Ethernet",
+                "requirements.rec.title": "Matériel — Recommandé",
+                "requirements.rec.subtitle": "Pour modèles IA + usage intensif",
+                "requirements.rec.cpu": "Processeur 8+ cœurs",
+                "requirements.rec.ram": "32 Go DDR4/DDR5",
+                "requirements.rec.gpu": "NVIDIA RTX 3060+ avec 8Go+ VRAM",
+                "requirements.rec.storage": "500 Go NVMe SSD",
+                "requirements.rec.network": "Ethernet Gigabit",
+                "requirements.table.title": "Exigences des Modèles IA",
+                "requirements.table.model": "Modèle",
+                "requirements.table.size": "Taille",
+                "requirements.table.ram": "RAM Requise",
+                "requirements.table.vram": "VRAM GPU",
+                "requirements.table.quality": "Qualité",
+                "setup.step": "Étape",
+                "setup.title": "Configuration du Système de Base",
+                "setup.subtitle": "Installez Docker et préparez votre système. C'est la fondation de tout le reste.",
+                "setup.docker.title": "Installer Docker & Docker Compose",
+                "setup.docker.desc": "Les conteneurs Docker permettent d'exécuter chaque service de manière isolée.",
+                "setup.docker.linux.tip": "Ces commandes fonctionnent sur Ubuntu/Debian. Pour d'autres distros, consultez la doc Docker.",
+                "setup.docker.macos.tip": "Sur macOS, Docker Desktop est le plus simple.",
+                "setup.docker.windows.tip": "Vous avez besoin de Windows 10/11 Pro pour Hyper-V. Utilisateurs Home : activez WSL2.",
+                "cloud.title": "Déployez Votre Stockage Cloud",
+                "cloud.subtitle": "Configurez Nextcloud avec une base de données — votre remplacement de Google Drive.",
+                "cloud.compose.title": "Créer le Fichier Docker Compose",
+                "cloud.compose.desc": "Ce fichier unique définit tous les services.",
+                "cloud.compose.warning": "Important : Changez tous les mots de passe avant le déploiement !",
+                "ai.title": "Configurez Votre Serveur IA",
+                "ai.subtitle": "Téléchargez et exécutez des modèles IA localement. Discutez avec l'IA en privé.",
+                "ai.models.title": "Télécharger des Modèles IA avec Ollama",
+                "ai.models.desc": "Ollama est déjà en cours d'exécution. Téléchargeons quelques modèles.",
+                "ai.models.tip": "Les téléchargements peuvent être volumineux (2-40 Go). Phi3 Mini fait ~2.3 Go et est parfait pour commencer.",
+                "ui.title": "Interface Soignée & Accès Distant",
+                "ui.subtitle": "Configurez HTTPS, proxy inverse et accès distant optionnel.",
+                "result.card1.title": "Votre Google Drive Personnel",
+                "result.card1.desc": "Uploadez, synchronisez et partagez des fichiers sur tous vos appareils.",
+                "result.card2.title": "Assistant IA Privé",
+                "result.card2.desc": "Conversations type ChatGPT sur votre matériel.",
+                "result.card3.title": "Recherche Intelligente",
+                "result.card3.desc": "Recherche plein texte dans tous vos documents.",
+                "result.card4.title": "Accès de Partout",
+                "result.card4.desc": "Accès distant sécurisé via VPN ou tunnels.",
+                "faq.title": "Questions Fréquentes",
+                "faq.subtitle": "Questions courantes et conseils de dépannage.",
+                "faq.q1": "Combien ça coûte à faire fonctionner ?",
+                "faq.a1": "Tous les logiciels sont 100% gratuits et open source. Les seuls coûts sont le matériel et l'électricité (~1-2€/mois).",
+                "faq.q2": "Puis-je exécuter ceci sur un Raspberry Pi ?",
+                "faq.a2": "Oui, partiellement ! Un Raspberry Pi 5 peut faire tourner Nextcloud, mais les modèles IA ont besoin de plus de ressources.",
+                "faq.q3": "Mes données sont-elles en sécurité ?",
+                "faq.a3": "Avec des sauvegardes quotidiennes, vos données sont protégées. Utilisez RAID et des backups externes pour plus de sécurité.",
+                "faq.q4": "Comment tout mettre à jour ?",
+                "faq.a4": "Exécutez docker compose pull puis docker compose up -d pour mettre à jour tous les services.",
+                "footer.title": "Guide d'Auto-Hébergement",
+                "footer.desc": "Construit avec des logiciels open source. Vos données, votre matériel, vos règles.",
+                "footer.license": "Guide open source.",
+                "copy": "Copier",
+                "copied": "Copié !",
+                "chatbot.name": "Assistant HomeCloud",
+                "chatbot.status": "En ligne — Prêt à aider",
+                "chatbot.welcome": "Salut ! 👋 Je suis votre Assistant HomeCloud. Je peux vous aider avec des questions sur la configuration de votre serveur cloud personnel, les modèles d'IA, Docker, Nextcloud et plus encore. Que voulez-vous savoir ?",
+                "chatbot.suggestion1": "Quel matériel ai-je besoin ?",
+                "chatbot.suggestion2": "Comment installer Docker ?",
+                "chatbot.suggestion3": "Meilleur modèle IA pour débuter ?",
+                "chatbot.placeholder": "Tapez votre question..."
+            },
+            it: {
+                "nav.overview": "Panoramica",
+                "nav.requirements": "Requisiti",
+                "nav.setup": "Configurazione",
+                "nav.cloud": "Cloud",
+                "nav.ai": "Server IA",
+                "nav.interface": "Interfaccia",
+                "nav.faq": "FAQ",
+                "hero.badge": "Guida Completa • Edizione 2026",
+                "hero.title1": "Costruisci Il Tuo",
+                "hero.title2": "Cloud Personale",
+                "hero.title3": "Server IA",
+                "hero.subtitle": "Una guida interattiva passo-passo per ospitare i tuoi file come Google Drive e eseguire i tuoi modelli IA — su Windows, macOS o Linux.",
+                "hero.cta1": "Inizia",
+                "hero.cta2": "Leggi Panoramica",
+                "hero.stat1": "Tempo di Setup",
+                "hero.stat2": "Costo Software",
+                "hero.stat3": "I Tuoi Dati, Il Tuo Controllo",
+                "overview.title": "Cosa Costruiremo",
+                "overview.subtitle": "Un ecosistema self-hosted completo — il tuo cloud personale + assistente IA, tutto sul tuo hardware.",
+                "overview.card1.title": "Storage Cloud Personale",
+                "overview.card1.desc": "Storage Nextcloud con sync, condivisione, app mobile e ricerca — come Google Drive, ma tuo.",
+                "overview.card2.title": "Modelli IA Locali",
+                "overview.card2.desc": "Esegui LLaMA, Mistral, Phi e altri modelli IA localmente con Ollama — nessun costo API, privacy totale.",
+                "overview.card3.title": "Interfaccia Chat",
+                "overview.card3.desc": "Open WebUI ti offre un'esperienza ChatGPT per interagire con i tuoi modelli IA.",
+                "overview.card4.title": "Ricerca Intelligente",
+                "overview.card4.desc": "Ricerca full-text in tutti i tuoi file — trova tutto istantaneamente.",
+                "overview.card5.title": "Sicuro & Privato",
+                "overview.card5.desc": "Crittografia HTTPS, autenticazione, tutto sul tuo hardware — nessun dato lascia il tuo controllo.",
+                "overview.card6.title": "Accesso Remoto",
+                "overview.card6.desc": "Accesso ovunque tramite tunnel sicuri o VPN — il tuo cloud, disponibile ovunque.",
+                "chatbot.name": "Assistente HomeCloud",
+                "chatbot.status": "Online — Pronto ad aiutare",
+                "chatbot.welcome": "Ciao! 👋 Sono il tuo Assistente HomeCloud. Posso aiutarti con domande sulla configurazione del tuo server cloud personale, modelli IA, Docker, Nextcloud e altro. Cosa vorresti sapere?",
+                "chatbot.suggestion1": "Che hardware mi serve?",
+                "chatbot.suggestion2": "Come installare Docker?",
+                "chatbot.suggestion3": "Miglior modello IA per iniziare?",
+                "chatbot.placeholder": "Scrivi la tua domanda...",
+                "copy": "Copia",
+                "copied": "Copiato!",
+                "setup.step": "Passo",
+                "faq.title": "Domande Frequenti",
+                "faq.subtitle": "Domande comuni e suggerimenti.",
+                "footer.title": "Guida Self-Hosted",
+                "footer.desc": "Costruito con software open source. I tuoi dati, il tuo hardware, le tue regole.",
+                "footer.license": "Guida open source."
+            },
+            pt: {
+                "nav.overview": "Visão Geral",
+                "nav.requirements": "Requisitos",
+                "nav.setup": "Configuração",
+                "nav.cloud": "Nuvem",
+                "nav.ai": "Servidor IA",
+                "nav.interface": "Interface",
+                "nav.faq": "FAQ",
+                "hero.badge": "Guia Completo • Edição 2026",
+                "hero.title1": "Construa Sua Própria",
+                "hero.title2": "Nuvem Pessoal",
+                "hero.title3": "Servidor de IA",
+                "hero.subtitle": "Um guia interativo passo a passo para hospedar seus arquivos como Google Drive e executar seus próprios modelos de IA — no Windows, macOS ou Linux.",
+                "hero.cta1": "Começar",
+                "hero.cta2": "Ler Visão Geral",
+                "hero.stat1": "Tempo de Configuração",
+                "hero.stat2": "Custo do Software",
+                "hero.stat3": "Seus Dados, Seu Controle",
+                "overview.title": "O Que Vamos Construir",
+                "overview.subtitle": "Um ecossistema auto-hospedado completo — seu armazenamento pessoal na nuvem + assistente de IA, tudo no seu próprio hardware.",
+                "overview.card1.title": "Armazenamento na Nuvem",
+                "overview.card1.desc": "Armazenamento Nextcloud com sincronização, compartilhamento, apps móveis e busca — como Google Drive, mas seu.",
+                "overview.card2.title": "Modelos de IA Locais",
+                "overview.card2.desc": "Execute LLaMA, Mistral, Phi e outros modelos de IA localmente com Ollama — sem custos de API, privacidade total.",
+                "overview.card3.title": "Interface de Chat",
+                "overview.card3.desc": "Open WebUI oferece uma experiência ChatGPT para interagir com seus modelos de IA.",
+                "overview.card4.title": "Busca Inteligente",
+                "overview.card4.desc": "Busca de texto completo em todos os seus arquivos — encontre qualquer coisa instantaneamente.",
+                "overview.card5.title": "Seguro & Privado",
+                "overview.card5.desc": "Criptografia HTTPS, autenticação, tudo no seu hardware — nenhum dado sai do seu controle.",
+                "overview.card6.title": "Acesso Remoto",
+                "overview.card6.desc": "Acesse de qualquer lugar via túneis seguros ou VPN — sua nuvem, disponível em qualquer lugar.",
+                "chatbot.name": "Assistente HomeCloud",
+                "chatbot.status": "Online — Pronto para ajudar",
+                "chatbot.welcome": "Olá! 👋 Sou seu Assistente HomeCloud. Posso ajudá-lo com perguntas sobre a configuração do seu servidor de nuvem pessoal, modelos de IA, Docker, Nextcloud e mais. O que você gostaria de saber?",
+                "chatbot.suggestion1": "Que hardware preciso?",
+                "chatbot.suggestion2": "Como instalar Docker?",
+                "chatbot.suggestion3": "Melhor modelo de IA?",
+                "chatbot.placeholder": "Digite sua pergunta...",
+                "copy": "Copiar",
+                "copied": "Copiado!",
+                "setup.step": "Passo",
+                "faq.title": "Perguntas Frequentes",
+                "faq.subtitle": "Perguntas comuns e dicas.",
+                "footer.title": "Guia de Auto-Hospedagem",
+                "footer.desc": "Construído com software de código aberto. Seus dados, seu hardware, suas regras.",
+                "footer.license": "Guia de código aberto."
+            },
+            zh: {
+                "nav.overview": "概述",
+                "nav.requirements": "要求",
+                "nav.setup": "设置",
+                "nav.cloud": "云存储",
+                "nav.ai": "AI服务器",
+                "nav.interface": "界面",
+                "nav.faq": "常见问题",
+                "hero.badge": "完整指南 • 2026版",
+                "hero.title1": "构建您自己的",
+                "hero.title2": "个人云",
+                "hero.title3": "AI服务器",
+                "hero.subtitle": "一个交互式分步指南，用于像Google Drive一样托管您的文件并运行自己的AI模型——在Windows、macOS或Linux上。",
+                "hero.cta1": "开始构建",
+                "hero.cta2": "阅读概述",
+                "hero.stat1": "设置时间",
+                "hero.stat2": "软件成本",
+                "hero.stat3": "您的数据，您的控制",
+                "overview.title": "我们要构建什么",
+                "overview.subtitle": "一个完整的自托管生态系统——您的个人云存储 + AI助手，全部运行在您自己的硬件上。",
+                "overview.card1.title": "个人云存储",
+                "overview.card1.desc": "Nextcloud驱动的文件存储，具有同步、共享、移动应用和全文搜索——像Google Drive，但属于您。",
+                "overview.card2.title": "本地AI模型",
+                "overview.card2.desc": "使用Ollama在本地运行LLaMA、Mistral、Phi等开源AI模型——无API费用，完全隐私。",
+                "overview.card3.title": "聊天界面",
+                "overview.card3.desc": "Open WebUI为您提供类似ChatGPT的体验来与您的AI模型交互。",
+                "overview.card4.title": "智能文件搜索",
+                "overview.card4.desc": "在所有文件中进行全文搜索——即时找到任何内容。",
+                "overview.card5.title": "安全且私密",
+                "overview.card5.desc": "HTTPS加密、用户认证，一切都在您的硬件上运行——没有数据离开您的控制。",
+                "overview.card6.title": "远程访问",
+                "overview.card6.desc": "通过安全隧道或VPN从任何地方访问——您的云，随时随地可用。",
+                "chatbot.name": "HomeCloud助手",
+                "chatbot.status": "在线 — 准备帮助",
+                "chatbot.welcome": "你好！👋 我是你的HomeCloud助手。我可以帮助你解答有关设置个人云服务器、AI模型、Docker、Nextcloud等问题。你想了解什么？",
+                "chatbot.suggestion1": "我需要什么硬件？",
+                "chatbot.suggestion2": "如何安装Docker？",
+                "chatbot.suggestion3": "最佳入门AI模型？",
+                "chatbot.placeholder": "输入您的问题...",
+                "copy": "复制",
+                "copied": "已复制！",
+                "setup.step": "步骤",
+                "faq.title": "常见问题",
+                "faq.subtitle": "常见问题和故障排除提示。",
+                "footer.title": "自托管指南",
+                "footer.desc": "使用开源软件构建。您的数据，您的硬件，您的规则。",
+                "footer.license": "开源指南。"
+            },
+            ja: {
+                "nav.overview": "概要",
+                "nav.requirements": "要件",
+                "nav.setup": "セットアップ",
+                "nav.cloud": "クラウド",
+                "nav.ai": "AIサーバー",
+                "nav.interface": "インターフェース",
+                "nav.faq": "よくある質問",
+                "hero.badge": "完全ガイド • 2026年版",
+                "hero.title1": "自分だけの",
+                "hero.title2": "パーソナルクラウド",
+                "hero.title3": "AIサーバー",
+                "hero.subtitle": "Google Driveのようにファイルをセルフホストし、独自のAIモデルを実行するためのステップバイステップのインタラクティブガイド — Windows、macOS、Linuxで。",
+                "hero.cta1": "構築を開始",
+                "hero.cta2": "概要を読む",
+                "hero.stat1": "セットアップ時間",
+                "hero.stat2": "ソフトウェア費用",
+                "hero.stat3": "あなたのデータ、あなたの管理",
+                "overview.title": "構築するもの",
+                "overview.subtitle": "完全なセルフホスト型エコシステム — パーソナルクラウドストレージ + AIアシスタント、すべてあなた自身のハードウェアで動作。",
+                "overview.card1.title": "パーソナルクラウドストレージ",
+                "overview.card1.desc": "同期、共有、モバイルアプリ、全文検索を備えたNextcloudファイルストレージ — Google Driveのように、でもあなたのもの。",
+                "overview.card2.title": "ローカルAIモデル",
+                "overview.card2.desc": "Ollamaを使用してLLaMA、Mistral、Phiなどのオープンソースモデルをローカルで実行 — API料金なし、完全なプライバシー。",
+                "overview.card3.title": "チャットインターフェース",
+                "overview.card3.desc": "Open WebUIでChatGPTのような体験でAIモデルと対話。",
+                "overview.card4.title": "スマートファイル検索",
+                "overview.card4.desc": "すべてのファイルで全文検索 — 何でも即座に見つかります。",
+                "overview.card5.title": "安全でプライベート",
+                "overview.card5.desc": "HTTPS暗号化、ユーザー認証、すべてあなたのハードウェアで — データがあなたの管理を離れることはありません。",
+                "overview.card6.title": "リモートアクセス",
+                "overview.card6.desc": "安全なトンネルまたはVPN経由でどこからでもアクセス — あなたのクラウド、どこでも利用可能。",
+                "chatbot.name": "HomeCloudアシスタント",
+                "chatbot.status": "オンライン — お手伝いの準備ができています",
+                "chatbot.welcome": "こんにちは！👋 HomeCloudアシスタントです。パーソナルクラウドサーバーの設定、AIモデル、Docker、Nextcloudなどについてご質問にお答えします。何を知りたいですか？",
+                "chatbot.suggestion1": "どんなハードウェアが必要？",
+                "chatbot.suggestion2": "Dockerのインストール方法は？",
+                "chatbot.suggestion3": "最初に最適なAIモデルは？",
+                "chatbot.placeholder": "質問を入力してください...",
+                "copy": "コピー",
+                "copied": "コピーしました！",
+                "setup.step": "ステップ",
+                "faq.title": "よくある質問",
+                "faq.subtitle": "一般的な質問とトラブルシューティングのヒント。",
+                "footer.title": "セルフホストガイド",
+                "footer.desc": "オープンソースソフトウェアで構築。あなたのデータ、あなたのハードウェア、あなたのルール。",
+                "footer.license": "オープンソースガイド。"
+            }
+        };
+
+        const languageNames = {
+            en: { flag: '🇬🇧', name: 'English' },
+            es: { flag: '🇪🇸', name: 'Español' },
+            de: { flag: '🇩🇪', name: 'Deutsch' },
+            fr: { flag: '🇫🇷', name: 'Français' },
+            it: { flag: '🇮🇹', name: 'Italiano' },
+            pt: { flag: '🇵🇹', name: 'Português' },
+            zh: { flag: '🇨🇳', name: '中文' },
+            ja: { flag: '🇯🇵', name: '日本語' }
+        };
+
+        let currentLanguage = 'en';
+
+        // ─── Language Functions ───
+        function applyTranslations(lang) {
+            const langData = translations[lang];
+            if (!langData) return;
+
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (langData[key]) {
+                    el.textContent = langData[key];
+                } else if (translations.en[key]) {
+                    el.textContent = translations.en[key];
+                }
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (langData[key]) {
+                    el.placeholder = langData[key];
+                } else if (translations.en[key]) {
+                    el.placeholder = translations.en[key];
+                }
+            });
+
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+        }
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Apply translations
+            applyTranslations(lang);
+
+            // Update language selector display
+            const langInfo = languageNames[lang];
+            if (langInfo) {
+                document.getElementById('currentFlag').textContent = langInfo.flag;
+                document.getElementById('currentLang').textContent = langInfo.name;
+            }
+
+            // Update active state in dropdown
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                opt.classList.toggle('active', opt.getAttribute('data-lang') === lang);
+            });
+
+            // Close dropdown
+            document.getElementById('langDropdown').classList.remove('open');
+
+            // Save preference
+            localStorage.setItem('homecloud-lang', lang);
+
+            // Update chatbot welcome message if chat is empty (only welcome message)
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages.children.length === 1) {
+                const welcomeEl = document.getElementById('chatWelcome');
+                if (welcomeEl && translations[lang] && translations[lang]['chatbot.welcome']) {
+                    welcomeEl.innerHTML = translations[lang]['chatbot.welcome'];
+                }
+            }
+
+            // Update suggestions
+            updateChatSuggestions(lang);
+        }
+
+        function updateChatSuggestions(lang) {
+            const langData = translations[lang] || translations.en;
+            const suggestions = document.querySelectorAll('.chat-suggestion');
+            const suggestionKeys = ['chatbot.suggestion1', 'chatbot.suggestion2', 'chatbot.suggestion3'];
+            
+            suggestions.forEach((btn, index) => {
+                if (suggestionKeys[index] && langData[suggestionKeys[index]]) {
+                    btn.textContent = langData[suggestionKeys[index]];
+                }
+            });
+        }
+
+        function toggleLangDropdown(event) {
+            event.stopPropagation();
+            document.getElementById('langDropdown').classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.lang-selector')) {
+                document.getElementById('langDropdown').classList.remove('open');
+            }
+        });
+
+        // ─── OS Selection ───
+        let currentOS = 'linux';
+
+        function selectOS(os) {
+            currentOS = os;
+            document.querySelectorAll('.os-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.os === os);
+            });
+            document.querySelectorAll('.os-content').forEach(content => {
+                content.classList.toggle('active', content.dataset.os === os);
+            });
+        }
+
+        function detectOS() {
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('win')) return 'windows';
+            if (ua.includes('mac')) return 'macos';
+            return 'linux';
+        }
+
+        // ─── Code Copy ───
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-block');
+            const code = codeBlock.querySelector('pre').textContent;
+            const langData = translations[currentLanguage] || translations.en;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = langData['copied'] || '✓ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = langData['copy'] || 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // ─── FAQ Toggle ───
+        function toggleFAQ(btn) {
+            const item = btn.closest('.faq-item');
+            const wasOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+            if (!wasOpen) item.classList.add('open');
+        }
+
+        // ─── Mobile Menu ───
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        }
+
+        // ─── Chatbot ───
+        let chatbotOpen = false;
+
+        function toggleChatbot() {
+            chatbotOpen = !chatbotOpen;
+            const container = document.getElementById('chatbotContainer');
+            const toggle = document.getElementById('chatbotToggle');
+            
+            container.classList.toggle('open', chatbotOpen);
+            toggle.classList.toggle('active', chatbotOpen);
+            toggle.textContent = chatbotOpen ? '✕' : '💬';
+
+            if (chatbotOpen) {
+                document.getElementById('chatInput').focus();
+            }
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addUserMessage(message);
+            input.value = '';
+
+            // Hide suggestions after first message
+            document.getElementById('chatSuggestions').style.display = 'none';
+
+            showTyping();
+
+            setTimeout(() => {
+                hideTyping();
+                const response = generateBotResponse(message);
+                addBotMessage(response);
+            }, 800 + Math.random() * 800);
+        }
+
+        function askSuggestion(btn) {
+            const question = btn.textContent;
+            document.getElementById('chatInput').value = question;
+            sendChatMessage();
+        }
+
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function addUserMessage(text) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-message user';
+            div.innerHTML = `
+                <div class="chat-message-avatar">👤</div>
+                <div class="chat-message-content">${escapeHtml(text)}</div>
+            `;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function addBotMessage(text) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-message bot';
+            div.innerHTML = `
+                <div class="chat-message-avatar">🤖</div>
+                <div class="chat-message-content">${text}</div>
+            `;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showTyping() {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-message bot';
+            div.id = 'typingIndicator';
+            div.innerHTML = `
+                <div class="chat-message-avatar">🤖</div>
+                <div class="chat-message-content">
+                    <div class="chat-typing">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function generateBotResponse(question) {
+            const q = question.toLowerCase();
+
+            // Hardware questions
+            if (q.includes('hardware') || q.includes('computer') || q.includes('pc') || q.includes('server') || q.includes('raspberry') || q.includes('硬件') || q.includes('ordenador') || q.includes('matériel') || q.includes('ハードウェア')) {
+                return `<strong>Minimum requirements:</strong><br><br>
+                • <strong>CPU:</strong> 4-core processor (Intel i5/AMD Ryzen 5)<br>
+                • <strong>RAM:</strong> 8GB minimum, 16GB recommended<br>
+                • <strong>Storage:</strong> 256GB SSD + 1TB+ for data<br><br>
+                <strong>For AI models:</strong> 32GB RAM and NVIDIA GPU with 8GB+ VRAM recommended.<br><br>
+                <strong>Budget options:</strong> Raspberry Pi 5 (~$80), Intel N100 Mini PC (~$150), Used Dell OptiPlex (~$100-200)<br><br>
+                Check the <a href="#requirements">Requirements section</a> for full details!`;
+            }
+
+            // Docker questions
+            if (q.includes('docker') || q.includes('container') || q.includes('compose') || q.includes('contenedor') || q.includes('conteneur')) {
+                return `<strong>Docker installation:</strong><br><br>
+                <strong>Linux:</strong><br>
+                <code>curl -fsSL https://get.docker.com | sudo sh</code><br><br>
+                <strong>macOS:</strong><br>
+                <code>brew install --cask docker</code><br><br>
+                <strong>Windows:</strong><br>
+                1. Enable WSL2: <code>wsl --install</code><br>
+                2. Install Docker Desktop<br><br>
+                See the <a href="#setup">Setup section</a> for detailed steps!`;
+            }
+
+            // AI model questions
+            if (q.includes('model') || q.includes('ai') || q.includes('llm') || q.includes('ollama') || q.includes('llama') || q.includes('mistral') || q.includes('模型') || q.includes('modelo') || q.includes('modèle') || q.includes('モデル')) {
+                return `<strong>Recommended AI models:</strong><br><br>
+                • <strong>Phi-3 Mini</strong> (2.3GB) - Great for 8GB RAM<br>
+                • <strong>Llama 3.1 8B</strong> (4.7GB) - Best for 16GB RAM ⭐<br>
+                • <strong>Mistral 7B</strong> (4.1GB) - Excellent all-rounder<br>
+                • <strong>Gemma 2 9B</strong> (5.4GB) - High quality<br><br>
+                Download with:<br>
+                <code>docker exec ollama ollama pull llama3.1:8b</code><br><br>
+                See <a href="#ai">AI Server section</a> for more!`;
+            }
+
+            // Cost questions
+            if (q.includes('cost') || q.includes('price') || q.includes('money') || q.includes('free') || q.includes('costo') || q.includes('precio') || q.includes('coût') || q.includes('費用') || q.includes('价格')) {
+                return `<strong>Great news — it's free!</strong> 🎉<br><br>
+                • All software: <strong>$0</strong> (open source)<br>
+                • API fees: <strong>$0</strong> (runs locally)<br>
+                • Subscriptions: <strong>$0</strong><br><br>
+                <strong>Only costs:</strong><br>
+                • Hardware (you may already own it)<br>
+                • Electricity: ~$1-5/month<br><br>
+                Compare to Google One + ChatGPT Plus = ~$360/year!`;
+            }
+
+            // Nextcloud questions
+            if (q.includes('nextcloud') || q.includes('file') || q.includes('cloud') || q.includes('storage') || q.includes('archivo') || q.includes('fichier') || q.includes('ファイル') || q.includes('文件')) {
+                return `<strong>Nextcloud</strong> is your personal Google Drive!<br><br>
+                ✅ File sync across all devices<br>
+                ✅ Mobile apps (iOS/Android)<br>
+                ✅ Desktop sync clients<br>
+                ✅ File sharing with links<br>
+                ✅ Full-text search<br>
+                ✅ Photo galleries<br><br>
+                Access at <code>http://YOUR_IP:8080</code> after setup!`;
+            }
+
+            // Default response
+            return `I can help you with:<br><br>
+            • <strong>Hardware</strong> - What you need to get started<br>
+            • <strong>Docker</strong> - Installation steps<br>
+            • <strong>AI models</strong> - Which to choose<br>
+            • <strong>Nextcloud</strong> - Cloud storage setup<br>
+            • <strong>Costs</strong> - It's all free!<br><br>
+            Try asking about any of these topics, or browse the <a href="#overview">guide sections</a>!`;
+        }
+
+        // ─── Scroll Effects ───
+        function handleScroll() {
+            const scrollY = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollY / docHeight) * 100;
+            
+            document.getElementById('navProgress').style.width = progress + '%';
+            document.getElementById('navbar').classList.toggle('scrolled', scrollY > 50);
+
+            // Progress sidebar
+            const sections = ['overview', 'requirements', 'setup', 'cloud', 'ai', 'ui', 'faq'];
+            const dots = document.querySelectorAll('.progress-dot');
+            
+            sections.forEach((id, i) => {
+                const el = document.getElementById(id);
+                if (el && dots[i]) {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                        dots.forEach(d => d.classList.remove('active'));
+                        dots[i].classList.add('active');
+                    }
+                    if (rect.bottom < window.innerHeight / 2) {
+                        dots[i].classList.add('completed');
+                    }
+                }
+            });
+
+            // Fade-up animations
+            document.querySelectorAll('.fade-up').forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight - 100) {
+                    el.classList.add('visible');
+                }
+            });
+
+            // Nav link active state
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                const id = link.getAttribute('href').slice(1);
+                const section = document.getElementById(id);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+                    link.classList.toggle('active', rect.top <= 200 && rect.bottom >= 200);
+                }
+            });
+        }
+
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // ─── Keyboard Shortcuts ───
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && chatbotOpen) {
+                toggleChatbot();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                if (!chatbotOpen) toggleChatbot();
+                setTimeout(() => document.getElementById('chatInput').focus(), 100);
+            }
+        });
+
+        // ─── Initialize ───
+        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('load', () => {
+            // Detect and set OS
+            selectOS(detectOS());
+            
+            // Handle scroll effects
+            handleScroll();
+
+            // Load saved language preference
+            const savedLang = localStorage.getItem('homecloud-lang');
+            if (savedLang && translations[savedLang]) {
+                changeLanguage(savedLang);
+            } else {
+                // Detect browser language
+                const browserLang = navigator.language.split('-')[0];
+                if (translations[browserLang]) {
+                    changeLanguage(browserLang);
+                } else {
+                    applyTranslations('en');
+                }
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                const target = document.querySelector(a.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body>
+</html>
