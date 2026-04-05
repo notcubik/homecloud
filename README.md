@@ -41,8 +41,8 @@ A beautiful, interactive guide to building your own personal cloud storage and A
 
 ## 📄 License
 
-Open source guide — feel free to fork and customize!
+Open source guide — feel free to fork and customize if credit is given!
 
 ---
 
-**Built with ❤️ for the self-hosting community**
+**Built for the self-hosting community**
